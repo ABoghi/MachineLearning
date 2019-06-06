@@ -104,12 +104,8 @@ def PolynomialModel(x,theta) :
     n = len(x)
     m = len(theta)
 
-    print(theta)
-    print(m)
-
     h = np.zeros(n)
     for j in range(m) :
-        print("j = "+str(j))
         for i in range(n) :
             h[i] = h[i] + theta[j] * pow(x[i],j)
 
@@ -203,3 +199,25 @@ def LogisticCostGradient(x,y,h,theta) :
             gradJ[j] = gradJ[j] + ( h[i] - y[i] ) / n * gradz[j]
 
     return gradJ
+
+def runLinearGradientDescent(x,y,theta,n_it,alpha) :
+    n = verifyLen(y,x)
+    m = len(theta)
+
+    alpha = abs(alpha)
+
+    print("Learning Rate = "+str(alpha))
+
+    for k in range(n_it) :
+        h = PolynomialModel(x,theta)
+        J = LinearCostFunction(y,h)
+        gradJ = LinearCostGradient(x,y,h,theta)
+        for j in range(m) :
+            theta[j] = theta[j] - alpha * gradJ[j]
+        print("iteration = "+str(k)+"; Cost function = "+str(J))
+    
+    h = PolynomialModel(x,theta)
+    print("Final Parameters:")
+    print(theta)
+
+    return h
