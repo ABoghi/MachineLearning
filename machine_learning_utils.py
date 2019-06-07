@@ -125,16 +125,8 @@ def SigmoidalModel(x,theta) :
     h []: (float) 1D array containing the regression.
     '''
     n = len(x)
-    m = len(theta)
 
-    print(theta)
-    print(m)
-
-    z = np.zeros(n)
-    for j in range(m) :
-        print("j = "+str(j))
-        for i in range(n) :
-            z[i] = z[i] + theta[j] * pow(x[i],j)
+    z = PolynomialModel(x,theta)
 
     h = np.zeros(n)
     for i in range(n) :
@@ -166,7 +158,7 @@ def CostGradient(x,y,h,theta) :
 
     return gradJ
 
-def runLinearGradientDescent(x,y,theta,n_it,alpha) :
+def runGradientDescent(x,y,theta,n_it,alpha,mode) :
     '''
     Inputs
     ------
@@ -175,11 +167,13 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
     theta []: (float) 1D array containing the model parameters.
     n_it []: (int) number of iterations.
     alpha []: (float) learning rate.
+    mode []: (string) string containing the model.
 
     Outputs
     -------
     h []: (float) 1D array containing the regression.
     '''
+
     n = verifyLen(y,x)
     m = len(theta)
 
@@ -193,8 +187,9 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
     Dx = max(x) - min(x)
     x = x / Dx
     for k in range(n_it) :
-        h = PolynomialModel(x,theta)
-        J = LinearCostFunction(y,h)
+        
+        h, J = RegressionModel(mode,x,y,theta)
+
         gradJ = CostGradient(x,y,h,theta)
         for j in range(m) :
             theta[j] = theta[j] - alpha * gradJ[j]
@@ -206,7 +201,7 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
     for j in range(m) :
         theta[j] = theta[j] / pow(Dx,j)
     
-    h = PolynomialModel(x,theta)
+    h, J = RegressionModel(mode,x,y,theta)
 
     GenFigures(it,Jv,x,y,h)
 
@@ -219,8 +214,8 @@ def GenFigures(it,Jv,x,y,h) :
     '''
     Inputs
     ------
-    it []: (int)
-    Jv []: (float) 
+    it []: (int) 1D array containing the iterations.
+    Jv []: (float) 1D array containing the cost function per iteration.
     x []: (float) 1D array containing the feature.
     y []: (float) 1D array containing the data.
     h []: (float) 1D array containing the regression.
@@ -242,6 +237,25 @@ def GenFigures(it,Jv,x,y,h) :
 
     return
 
+def ArtificialFeature(x_max,x_min,n) :
+    '''
+    Inputs
+    ------
+    x_min []: (float) minimum value of the feature.
+    x_max []: (float) maximum value of the feature.
+    n []: (int)
+
+    Outputs
+    -------
+    x []: (float) 1D array containing the feature. 
+    '''
+    dx = (x_max-x_min)/(n-1)
+    x = np.zeros(n)
+    for i in range(n) :
+        x[i] = x_min + dx * i
+
+    return x
+
 def PolynomialDataGenerator(theta,x_min,x_max,sigma,n) :
     '''
     Inputs
@@ -258,10 +272,7 @@ def PolynomialDataGenerator(theta,x_min,x_max,sigma,n) :
     y []: (float) 1D array containing the data.
     '''
 
-    dx = (x_max-x_min)/(n-1)
-    x = np.zeros(n)
-    for i in range(n) :
-        x[i] = x_min + dx * i
+    x = ArtificialFeature(x_max,x_min,n)
 
     y = PolynomialModel(x,theta)
 
@@ -269,3 +280,50 @@ def PolynomialDataGenerator(theta,x_min,x_max,sigma,n) :
         y[i] = y[i] + sigma * rm.uniform(-1,1) / 2.0
 
     return x, y
+
+def LogisticDataGenerator(theta,x_min,x_max,sigma,n) :
+    '''
+    Inputs
+    ------
+    theta []: (float) 1D array containing the model parameters.
+    x_min []: (float) minimum value of the feature.
+    x_max []: (float) maximum value of the feature.
+    sigma []: (float) noise amplitude.
+    n []: (int)
+
+    Outputs
+    -------
+    x []: (float) 1D array containing the feature. 
+    y []: (float) 1D array containing the data.
+    '''
+
+    x = ArtificialFeature(x_max,x_min,n)
+
+    z = PolynomialModel(x,theta)
+
+    y = np.zeros(n)
+    for i in range(n) :
+        y[i] = sigmoid(z[i])
+
+    if sigma > 1.0 :
+        sigma = 1.0
+    elif sigma < 0.0 :
+        sigma = 0.0
+
+    for i in range(n) :
+        y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0,1)
+
+    return x, y
+
+def RegressionModel(mode,x,y,theta) :
+
+    if mode == 'linear' :
+        h = PolynomialModel(x,theta)
+        J = LinearCostFunction(y,h)
+    elif mode == 'logistic' :
+        h = SigmoidalModel(x,theta)
+        J = LogisticCostFunction(y,h)
+    else :
+        raise ValueError('Unknown Regression Model')
+
+    return h, J
