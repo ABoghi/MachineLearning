@@ -142,7 +142,7 @@ def SigmoidalModel(x,theta) :
 
     return h
 
-def LinearCostGradient(x,y,h,theta) :
+def CostGradient(x,y,h,theta) :
     '''
     Inputs
     ------
@@ -166,35 +166,6 @@ def LinearCostGradient(x,y,h,theta) :
 
     return gradJ
 
-def LogisticCostGradient(x,y,h,theta) :
-    '''
-    Inputs
-    ------
-    x []: (float)
-    y []: (float) 
-    h []: (float)
-    theta []: (float)
-
-    Outputs
-    -------
-    J []: (float)
-    '''
-
-    n = verifyLen(y,h)
-    m = len(theta)
-
-    gradz = np.zeros(m)
-    for j in range(m) :
-        for i in range(n) :
-            gradz[j] = gradz[j] + pow(x[i],j)
-
-    gradJ = np.zeros(m)
-    for j in range(m) :
-        for i in range(n) :
-            gradJ[j] = gradJ[j] + ( h[i] - y[i] ) / n * gradz[j]
-
-    return gradJ
-
 def runLinearGradientDescent(x,y,theta,n_it,alpha) :
     n = verifyLen(y,x)
     m = len(theta)
@@ -205,15 +176,23 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
 
     Jv = []
     it = []
+    # Normalize the feature
+    Dx = max(x) - min(x)
+    x = x / Dx
     for k in range(n_it) :
         h = PolynomialModel(x,theta)
         J = LinearCostFunction(y,h)
-        gradJ = LinearCostGradient(x,y,h,theta)
+        gradJ = CostGradient(x,y,h,theta)
         for j in range(m) :
             theta[j] = theta[j] - alpha * gradJ[j]
         Jv.append(J)
         it.append(k)
         #print("iteration = "+str(k)+"; Cost function = "+str(J))
+    # Un-normalize the feature
+    x = x * Dx
+    for j in range(m) :
+        theta[j] = theta[j] / pow(Dx,j)
+    
     h = PolynomialModel(x,theta)
 
     GenFigures(it,Jv,x,y,h)
