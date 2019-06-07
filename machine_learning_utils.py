@@ -158,7 +158,7 @@ def CostGradient(x,y,h,theta) :
 
     return gradJ
 
-def runGradientDescent(x,y,theta,n_it,alpha,mode) :
+def runGradientDescent(x,y,theta,n_it,alpha,model) :
     '''
     Inputs
     ------
@@ -167,7 +167,7 @@ def runGradientDescent(x,y,theta,n_it,alpha,mode) :
     theta []: (float) 1D array containing the model parameters.
     n_it []: (int) number of iterations.
     alpha []: (float) learning rate.
-    mode []: (string) string containing the model.
+    model []: (string) string containing the model.
 
     Outputs
     -------
@@ -188,7 +188,7 @@ def runGradientDescent(x,y,theta,n_it,alpha,mode) :
     x = x / Dx
     for k in range(n_it) :
         
-        h, J = RegressionModel(mode,x,y,theta)
+        h, J = RegressionModel(model,x,y,theta)
 
         gradJ = CostGradient(x,y,h,theta)
         for j in range(m) :
@@ -201,7 +201,7 @@ def runGradientDescent(x,y,theta,n_it,alpha,mode) :
     for j in range(m) :
         theta[j] = theta[j] / pow(Dx,j)
     
-    h, J = RegressionModel(mode,x,y,theta)
+    h, J = RegressionModel(model,x,y,theta)
 
     GenFigures(it,Jv,x,y,h)
 
@@ -315,12 +315,25 @@ def LogisticDataGenerator(theta,x_min,x_max,sigma,n) :
 
     return x, y
 
-def RegressionModel(mode,x,y,theta) :
+def RegressionModel(model,x,y,theta) :
+    '''
+    Inputs
+    ------
+    model []: (string) string containing the model.
+    x []: (float) 1D array containing the feature.
+    y []: (float) 1D array containing the data. 
+    theta []: (float) 1D array containing the model parameters.
+    
+    Outputs
+    -------
+    h []: (float) 1D array containing the regression.
+    J []: (float) Cost Function.
+    '''
 
-    if mode == 'linear' :
+    if model == 'linear' :
         h = PolynomialModel(x,theta)
         J = LinearCostFunction(y,h)
-    elif mode == 'logistic' :
+    elif model == 'logistic' :
         h = SigmoidalModel(x,theta)
         J = LogisticCostFunction(y,h)
     else :
