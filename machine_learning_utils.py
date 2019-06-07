@@ -10,11 +10,11 @@ def sigmoid(z) :
     '''
     Inputs
     ------
-    z []: (float) 
+    z []: (float) sigmoid variable.
 
     Outputs
     -------
-    h []: (float)
+    h []: (float) 1D array containing the regression.
     '''
     
     return 1.0/(1.0 + np.exp(-z))
@@ -23,11 +23,11 @@ def antiSigmoid(h) :
     '''
     Inputs
     ------
-    h []: (float) 
+    h []: (float) 1D array containing the regression. 
 
     Outputs
     -------
-    z []: (float)
+    z []: (float) sigmoid variable.
     '''
     return np.log(h) - np.log(1.0 - h)
 
@@ -35,8 +35,8 @@ def verifyLen(y,h) :
     '''
     Inputs
     ------
-    y []: (float) 
-    h []: (float)
+    y []: (float) 1D array containing the data. 
+    h []: (float) 1D array containing the regression.
 
     Outputs
     -------
@@ -52,12 +52,12 @@ def LinearCostFunction(y,h) :
     '''
     Inputs
     ------
-    y []: (float) 
-    h []: (float)
+    y []: (float) 1D array containing the data. 
+    h []: (float) 1D array containing the regression.
 
     Outputs
     -------
-    J []: (float)
+    J []: (float) Cost Function.
     '''
 
     n = verifyLen(y,h)
@@ -73,12 +73,12 @@ def LogisticCostFunction(y,h) :
     '''
     Inputs
     ------
-    y []: (float) 
-    h []: (float)
+    y []: (float) 1D array containing the data. 
+    h []: (float) 1D array containing the regression.
 
     Outputs
     -------
-    J []: (float)
+    J []: (float) Cost Function.
     '''
 
     n = verifyLen(y,h)
@@ -94,12 +94,12 @@ def PolynomialModel(x,theta) :
     '''
     Inputs
     ------
-    x []: (float) 
-    theta []: (float)
+    x []: (float) 1D array containing the feature. 
+    theta []: (float) 1D array containing the model parameters.
 
     Outputs
     -------
-    h []: (float)
+    h []: (float) 1D array containing the regression.
     '''
     n = len(x)
     m = len(theta)
@@ -117,12 +117,12 @@ def SigmoidalModel(x,theta) :
     '''
     Inputs
     ------
-    x []: (float) 
-    theta []: (float)
+    x []: (float) 1D array containing the feature. 
+    theta []: (float) 1D array containing the model parameters.
 
     Outputs
     -------
-    h []: (float)
+    h []: (float) 1D array containing the regression.
     '''
     n = len(x)
     m = len(theta)
@@ -146,14 +146,14 @@ def CostGradient(x,y,h,theta) :
     '''
     Inputs
     ------
-    x []: (float)
-    y []: (float) 
-    h []: (float)
-    theta []: (float)
+    x []: (float) 1D array containing the feature.
+    y []: (float) 1D array containing the data. 
+    h []: (float) 1D array containing the regression.
+    theta []: (float) 1D array containing the model parameters.
 
     Outputs
     -------
-    J []: (float)
+    gradJ []: (float) Cost Function Gradient.
     '''
 
     n = verifyLen(y,h)
@@ -167,6 +167,19 @@ def CostGradient(x,y,h,theta) :
     return gradJ
 
 def runLinearGradientDescent(x,y,theta,n_it,alpha) :
+    '''
+    Inputs
+    ------
+    x []: (float) 1D array containing the feature.
+    y []: (float) 1D array containing the data. 
+    theta []: (float) 1D array containing the model parameters.
+    n_it []: (int) number of iterations.
+    alpha []: (float) learning rate.
+
+    Outputs
+    -------
+    h []: (float) 1D array containing the regression.
+    '''
     n = verifyLen(y,x)
     m = len(theta)
 
@@ -203,6 +216,18 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
     return h
 
 def GenFigures(it,Jv,x,y,h) :
+    '''
+    Inputs
+    ------
+    it []: (int)
+    Jv []: (float) 
+    x []: (float) 1D array containing the feature.
+    y []: (float) 1D array containing the data.
+    h []: (float) 1D array containing the regression.
+
+    Outputs
+    -------
+    '''
 
     plt.figure(1)
     plt.semilogy(it,Jv/Jv[0],'r')
@@ -216,3 +241,31 @@ def GenFigures(it,Jv,x,y,h) :
     plt.legend(loc='lower left')
 
     return
+
+def PolynomialDataGenerator(theta,x_min,x_max,sigma,n) :
+    '''
+    Inputs
+    ------
+    theta []: (float) 1D array containing the model parameters.
+    x_min []: (float) minimum value of the feature.
+    x_max []: (float) maximum value of the feature.
+    sigma []: (float) noise amplitude.
+    n []: (int)
+
+    Outputs
+    -------
+    x []: (float) 1D array containing the feature. 
+    y []: (float) 1D array containing the data.
+    '''
+
+    dx = (x_max-x_min)/(n-1)
+    x = np.zeros(n)
+    for i in range(n) :
+        x[i] = x_min + dx * i
+
+    y = PolynomialModel(x,theta)
+
+    for i in range(n) :
+        y[i] = y[i] + sigma * rm.uniform(-1,1) / 2.0
+
+    return x, y
