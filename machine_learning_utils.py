@@ -105,8 +105,9 @@ def PolynomialModel(x,theta) :
     m = len(theta)
 
     h = np.zeros(n)
-    for j in range(m) :
-        for i in range(n) :
+    
+    for i in range(n) :
+        for j in range(m) :
             h[i] = h[i] + theta[j] * pow(x[i],j)
 
     return h
@@ -158,16 +159,10 @@ def LinearCostGradient(x,y,h,theta) :
     n = verifyLen(y,h)
     m = len(theta)
 
-    
-    gradh = np.zeros(m)
-    for j in range(m) :
-        for i in range(n) :
-            gradh[j] = gradh[j] + pow(x[i],j)
-
     gradJ = np.zeros(m)
     for j in range(m) :
         for i in range(n) :
-            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * gradh[j]
+            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * pow(x[i],j)
 
     return gradJ
 
@@ -208,16 +203,37 @@ def runLinearGradientDescent(x,y,theta,n_it,alpha) :
 
     print("Learning Rate = "+str(alpha))
 
+    Jv = []
+    it = []
     for k in range(n_it) :
         h = PolynomialModel(x,theta)
         J = LinearCostFunction(y,h)
         gradJ = LinearCostGradient(x,y,h,theta)
         for j in range(m) :
             theta[j] = theta[j] - alpha * gradJ[j]
-        print("iteration = "+str(k)+"; Cost function = "+str(J))
-    
+        Jv.append(J)
+        it.append(k)
+        #print("iteration = "+str(k)+"; Cost function = "+str(J))
     h = PolynomialModel(x,theta)
+
+    GenFigures(it,Jv,x,y,h)
+
     print("Final Parameters:")
     print(theta)
 
     return h
+
+def GenFigures(it,Jv,x,y,h) :
+
+    plt.figure(1)
+    plt.semilogy(it,Jv/Jv[0],'r')
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Normalized Cost Function")
+    plt.figure(2)
+    plt.plot(x,y,'o', label='data')
+    plt.plot(x,h,'r', label='regression')
+    plt.xlabel("Feature")
+    plt.ylabel("y")
+    plt.legend(loc='lower left')
+
+    return
