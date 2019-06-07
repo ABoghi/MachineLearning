@@ -312,6 +312,7 @@ def LogisticDataGenerator(theta,x_min,x_max,sigma,n) :
 
     for i in range(n) :
         y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0,1)
+        y[i] = boundZeroOne(y[i])
 
     return x, y
 
@@ -340,3 +341,12 @@ def RegressionModel(model,x,y,theta) :
         raise ValueError('Unknown Regression Model')
 
     return h, J
+
+def boundZeroOne(y) :
+
+    if y <= 0.5 :
+        y = 0.0
+    else :
+        y = 1.0
+
+    return y
