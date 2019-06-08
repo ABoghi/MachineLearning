@@ -186,6 +186,9 @@ def runGradientDescent(x,y,theta,n_it,alpha,model) :
     # Normalize the feature
     Dx = max(x) - min(x)
     x = x / Dx
+    h, J = RegressionModel(model,x,y,theta)
+    J_old = J
+    theta_old = theta
     for k in range(n_it) :
         
         h, J = RegressionModel(model,x,y,theta)
@@ -196,6 +199,17 @@ def runGradientDescent(x,y,theta,n_it,alpha,model) :
         Jv.append(J)
         it.append(k)
         #print("iteration = "+str(k)+"; Cost function = "+str(J))
+        incr = 1.5
+        if J < J_old :
+            alpha = incr* alpha
+        elif J > J_old :
+            theta = theta_old
+            alpha = alpha / incr
+        else :
+            alpha = alpha 
+        #print("alpha = "+str(alpha)+"; J = "+str(J))
+        J_old = J
+        theta_old = theta
     # Un-normalize the feature
     x = x * Dx
     for j in range(m) :
@@ -207,6 +221,9 @@ def runGradientDescent(x,y,theta,n_it,alpha,model) :
 
     print("Final Parameters:")
     print(theta)
+
+    print("Final Learning Rate:")
+    print(alpha)
 
     return h
 
