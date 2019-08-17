@@ -134,11 +134,11 @@ def linear_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda
         Cost Function.
     '''
 
-    n = verify_length(y, h)
+    n = y.shape[1]
 
     J = 0.0
     for i in range(n):
-        J = J + pow(h[i]-y[i], 2.0)/(2.0*n)
+        J = J + pow(h[0][i]-y[0][i], 2.0)/(2.0*n)
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
@@ -164,11 +164,12 @@ def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lamb
         Cost Function.
     '''
 
-    n = verify_length(y, h)
+    n = y.shape[1]
 
     J = 0.0
     for i in range(n):
-        J = J - (y[i] * np.log(h[i]) + (1.0 - y[i]) * np.log(1.0 - h[i]))/n
+        J = J - (y[0][i] * np.log(h[0][i]) +
+                 (1.0 - y[0][i]) * np.log(1.0 - h[0][i]))/n
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
@@ -189,14 +190,14 @@ def polynomial_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
     h: np.ndarray 
         regression.
     '''
-    n = len(x)
+    n = x.shape[1]
+
     m = len(theta)
 
-    h = np.zeros(n)
-
+    h = np.zeros((1, n))
     for i in range(n):
         for j in range(m):
-            h[i] = h[i] + theta[j] * pow(x[i], j)
+            h[0][i] = h[0][i] + theta[j] * pow(x[0][i], j)
 
     return h
 
@@ -215,13 +216,13 @@ def sigmoidal_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
     h: np.ndarray 
         regression.
     '''
-    n = len(x)
+    n = x.shape[1]
 
     z = polynomial_model(x, theta)
 
-    h = np.zeros(n)
+    h = np.zeros((1, n))
     for i in range(n):
-        h[i] = sigmoid(z[i])
+        h[0][i] = sigmoid(z[0][i])
 
     return h
 
@@ -249,13 +250,13 @@ def cost_function_gradient(x: np.ndarray, y: np.ndarray, h: np.ndarray, theta: n
         Cost Function Gradient.
     '''
 
-    n = verify_length(y, h)
+    n = x.shape[1]
     m = len(theta)
 
     gradJ = np.zeros(m)
     for j in range(m):
         for i in range(n):
-            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * pow(x[i], j)
+            gradJ[j] = gradJ[j] + ((h[0][i]-y[0][i])/n) * pow(x[0][i], j)
 
     gradJ = regularized_cost_function_gradient(gradJ, theta, Lambda, i_r)
 
@@ -288,8 +289,10 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     h: np.ndarray 
         regression.
     '''
+    x_raws = x.shape[0]
+    x_cols = x.shape[1]
 
-    n = verify_length(y, x)
+    #n = verify_length(y, x)
     m = len(theta)
     if i_r >= m:
         warnings.warn(
@@ -304,7 +307,7 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     Jv = []
     it = []
     # Normalize the feature
-    Dx = max(x) - min(x)
+    Dx = np.amax(x) - np.amin(x)
     x = x / Dx
     h, J = regression_model(model, x, y, theta, Lambda, i_r)
     J_old = J
@@ -372,8 +375,8 @@ def generate_figures(it: np.ndarray, Jv: np.ndarray, x: np.ndarray, y: np.ndarra
     plt.xlabel("Number of Iterations")
     plt.ylabel("Normalized Cost Function")
     plt.figure(2)
-    plt.plot(x, y, 'o', label='data')
-    plt.plot(x, h, 'r', label='regression')
+    plt.plot(x[0][:], y[0][:], 'o', label='data')
+    plt.plot(x[0][:], h[0][:], 'r', label='regression')
     plt.xlabel("Feature")
     plt.ylabel("y")
     plt.legend(loc='lower left')
@@ -398,9 +401,9 @@ def artificial_feature(x_max: float, x_min: float, n: int) -> np.ndarray:
         features.
     '''
     dx = (x_max-x_min)/(n-1)
-    x = np.zeros(n)
+    x = np.zeros((1, n))
     for i in range(n):
-        x[i] = x_min + dx * i
+        x[0][i] = x_min + dx * i
 
     return x
 
@@ -433,7 +436,7 @@ def polynomial_data_generator(theta: np.ndarray, x_min: float, x_max: float, sig
     y = polynomial_model(x, theta)
 
     for i in range(n):
-        y[i] = y[i] + sigma * rm.uniform(-1, 1) / 2.0
+        y[0][i] = y[0][i] + sigma * rm.uniform(-1, 1) / 2.0
 
     return x, y
 
@@ -465,9 +468,9 @@ def logistic_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma
 
     z = polynomial_model(x, theta)
 
-    y = np.zeros(n)
+    y = np.zeros((1, n))
     for i in range(n):
-        y[i] = sigmoid(z[i])
+        y[0][i] = sigmoid(z[0][i])
 
     if sigma > 1.0:
         sigma = 1.0
@@ -475,8 +478,8 @@ def logistic_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma
         sigma = 0.0
 
     for i in range(n):
-        y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0, 1)
-        y[i] = rebound_between_zero_and_one(y[i])
+        y[0][i] = (1 - sigma) * y[0][i] + sigma * rm.uniform(0, 1)
+        y[0][i] = rebound_between_zero_and_one(y[0][i])
 
     return x, y
 
