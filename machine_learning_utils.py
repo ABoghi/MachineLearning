@@ -134,11 +134,11 @@ def linear_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda
         Cost Function.
     '''
 
-    n = y.shape[1]
+    n = len(y)
 
     J = 0.0
     for i in range(n):
-        J = J + pow(h[0][i]-y[0][i], 2.0)/(2.0*n)
+        J = J + pow(h[i]-y[i], 2.0)/(2.0*n)
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
@@ -164,16 +164,38 @@ def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lamb
         Cost Function.
     '''
 
-    n = y.shape[1]
+    n = len(y)
 
     J = 0.0
     for i in range(n):
-        J = J - (y[0][i] * np.log(h[0][i]) +
-                 (1.0 - y[0][i]) * np.log(1.0 - h[0][i]))/n
+        J = J - (y[i] * np.log(h[i]) +
+                 (1.0 - y[i]) * np.log(1.0 - h[i]))/n
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
     return J
+
+
+def polynomial_terms(x: np.ndarray, j: int) -> float:
+    '''
+    Parameters
+    ----------
+    x: np.ndarray 
+        features.
+    j: int
+        index of the parameter theta.
+
+    Returns
+    -------
+    term: float 
+        polynomial term.
+    '''
+
+    m = len(x)
+    if m == 1:
+        term = pow(x, j)
+
+    return term
 
 
 def polynomial_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -194,10 +216,10 @@ def polynomial_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
 
     m = len(theta)
 
-    h = np.zeros((1, n))
+    h = np.zeros(n)
     for i in range(n):
         for j in range(m):
-            h[0][i] = h[0][i] + theta[j] * pow(x[0][i], j)
+            h[i] = h[i] + theta[j] * polynomial_terms(x[:, i], j)
 
     return h
 
@@ -220,9 +242,9 @@ def sigmoidal_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
 
     z = polynomial_model(x, theta)
 
-    h = np.zeros((1, n))
+    h = np.zeros(n)
     for i in range(n):
-        h[0][i] = sigmoid(z[0][i])
+        h[i] = sigmoid(z[i])
 
     return h
 
@@ -256,7 +278,8 @@ def cost_function_gradient(x: np.ndarray, y: np.ndarray, h: np.ndarray, theta: n
     gradJ = np.zeros(m)
     for j in range(m):
         for i in range(n):
-            gradJ[j] = gradJ[j] + ((h[0][i]-y[0][i])/n) * pow(x[0][i], j)
+            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * \
+                polynomial_terms(x[:, i], j)
 
     gradJ = regularized_cost_function_gradient(gradJ, theta, Lambda, i_r)
 
@@ -375,8 +398,8 @@ def generate_figures(it: np.ndarray, Jv: np.ndarray, x: np.ndarray, y: np.ndarra
     plt.xlabel("Number of Iterations")
     plt.ylabel("Normalized Cost Function")
     plt.figure(2)
-    plt.plot(x[0][:], y[0][:], 'o', label='data')
-    plt.plot(x[0][:], h[0][:], 'r', label='regression')
+    plt.plot(x[0][:], y, 'o', label='data')
+    plt.plot(x[0][:], h, 'r', label='regression')
     plt.xlabel("Feature")
     plt.ylabel("y")
     plt.legend(loc='lower left')
@@ -436,7 +459,7 @@ def polynomial_data_generator(theta: np.ndarray, x_min: float, x_max: float, sig
     y = polynomial_model(x, theta)
 
     for i in range(n):
-        y[0][i] = y[0][i] + sigma * rm.uniform(-1, 1) / 2.0
+        y[i] = y[i] + sigma * rm.uniform(-1, 1) / 2.0
 
     return x, y
 
@@ -468,9 +491,9 @@ def logistic_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma
 
     z = polynomial_model(x, theta)
 
-    y = np.zeros((1, n))
+    y = np.zeros(n)
     for i in range(n):
-        y[0][i] = sigmoid(z[0][i])
+        y[i] = sigmoid(z[i])
 
     if sigma > 1.0:
         sigma = 1.0
@@ -478,8 +501,8 @@ def logistic_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma
         sigma = 0.0
 
     for i in range(n):
-        y[0][i] = (1 - sigma) * y[0][i] + sigma * rm.uniform(0, 1)
-        y[0][i] = rebound_between_zero_and_one(y[0][i])
+        y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0, 1)
+        y[i] = rebound_between_zero_and_one(y[i])
 
     return x, y
 
