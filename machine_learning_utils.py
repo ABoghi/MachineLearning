@@ -1,181 +1,301 @@
 import numpy as np
-
 import random as rm
-
 import matplotlib
-
 from matplotlib import pyplot as plt
+import warnings
+from typing import Union
 
-def sigmoid(z) :
+
+def sigmoid(z: float) -> float:
     '''
-    Inputs
-    ------
-    z []: (float) sigmoid variable.
+    Parameters
+    ----------
+    z: float
+        sigmoid variable.
 
-    Outputs
+    Returns
     -------
-    h []: (float) 1D array containing the regression.
+    h: float
+        regression.
     '''
-    
+
     return 1.0/(1.0 + np.exp(-z))
 
-def antiSigmoid(h) :
-    '''
-    Inputs
-    ------
-    h []: (float) 1D array containing the regression. 
 
-    Outputs
+def anti_sigmoid(h: float) -> float:
+    '''
+    Parameters
+    ----------
+    h: float
+        regression. 
+
+    Returns
     -------
-    z []: (float) sigmoid variable.
+    z: float 
+        sigmoid variable.
     '''
     return np.log(h) - np.log(1.0 - h)
 
-def verifyLen(y,h) :
-    '''
-    Inputs
-    ------
-    y []: (float) 1D array containing the data. 
-    h []: (float) 1D array containing the regression.
 
-    Outputs
+def verify_length(y: np.ndarray, h: np.ndarray) -> int:
+    '''
+    Parameters
+    ----------
+    y: np.ndarray
+        data. 
+    h: np.ndarray 
+        regression.
+
+    Returns
     -------
+    n: int
+        data/regression length.
     '''
     n = len(y)
     m = len(h)
-    if n != m :
+    if n != m:
         quit()
 
     return n
 
-def LinearCostFunction(y,h) :
-    '''
-    Inputs
-    ------
-    y []: (float) 1D array containing the data. 
-    h []: (float) 1D array containing the regression.
 
-    Outputs
+def regularized_cost_function(J: float, theta: np.ndarray, Lambda: float, i_r: int) -> float:
+    '''
+    Parameters
+    ----------
+    J: float
+        Cost Function.
+    theta: np.ndarray
+        Model Parameters.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
+
+    Returns
     -------
-    J []: (float) Cost Function.
+    J: float
+        Cost Function.
     '''
 
-    n = verifyLen(y,h)
-
-    J = 0.0
-    for i in range(n) :
-        J = J + pow(h[i]-y[i],2.0)/(2.0*n)
+    m = len(theta)
+    if i_r < m:
+        for j in range(i_r, m):
+            J = J + Lambda * pow(theta[j], 2.0) / (2.0 * m)
 
     return J
 
-def LogisticCostFunction(y,h) :
 
+def regularized_cost_function_gradient(gradJ: np.ndarray, theta: np.ndarray, Lambda: float, i_r: int) -> np.ndarray:
     '''
-    Inputs
-    ------
-    y []: (float) 1D array containing the data. 
-    h []: (float) 1D array containing the regression.
+    Parameters
+    ----------
+    gradJ: np.ndarray 
+        Cost Function Gradient.
+    theta: np.ndarray
+        Model Parameters.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
 
-    Outputs
+    Returns
     -------
-    J []: (float) Cost Function.
+    gradJ: np.ndarray 
+        Cost Function Gradient.
+    '''
+    m = len(theta)
+
+    if i_r < m:
+        for j in range(i_r, m):
+            gradJ[j] = gradJ[j] + Lambda * theta[j] / m
+
+    return gradJ
+
+
+def linear_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda: float, i_r: int) -> float:
+    '''
+    Parameters
+    ----------
+    y: np.ndarray
+        data.  
+    h: np.ndarray 
+        regression.
+    theta: np.ndarray
+        Model Parameters.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
+
+    Returns
+    -------
+    J: float
+        Cost Function.
     '''
 
-    n = verifyLen(y,h)
+    n = verify_length(y, h)
 
     J = 0.0
-    for i in range(n) :
-        J = J - ( y[i] * np.log(h[i]) + (1.0 - y[i]) * np.log(1.0 - h[i]) )/n
+    for i in range(n):
+        J = J + pow(h[i]-y[i], 2.0)/(2.0*n)
+
+    J = regularized_cost_function(J, theta, Lambda, i_r)
 
     return J
 
-def PolynomialModel(x,theta) :
-    
-    '''
-    Inputs
-    ------
-    x []: (float) 1D array containing the feature. 
-    theta []: (float) 1D array containing the model parameters.
 
-    Outputs
+def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda: float, i_r: int) -> float:
+    '''
+    Parameters
+    ----------
+    y: np.ndarray
+        data.  
+    h: np.ndarray 
+        regression.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
+
+    Returns
     -------
-    h []: (float) 1D array containing the regression.
+    J: float
+        Cost Function.
+    '''
+
+    n = verify_length(y, h)
+
+    J = 0.0
+    for i in range(n):
+        J = J - (y[i] * np.log(h[i]) + (1.0 - y[i]) * np.log(1.0 - h[i]))/n
+
+    J = regularized_cost_function(J, theta, Lambda, i_r)
+
+    return J
+
+
+def polynomial_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x: np.ndarray 
+        features.
+    theta: np.ndarray
+        Model Parameters.
+
+    Returns
+    -------
+    h: np.ndarray 
+        regression.
     '''
     n = len(x)
     m = len(theta)
 
     h = np.zeros(n)
-    
-    for i in range(n) :
-        for j in range(m) :
-            h[i] = h[i] + theta[j] * pow(x[i],j)
+
+    for i in range(n):
+        for j in range(m):
+            h[i] = h[i] + theta[j] * pow(x[i], j)
 
     return h
 
-def SigmoidalModel(x,theta) :
-    
-    '''
-    Inputs
-    ------
-    x []: (float) 1D array containing the feature. 
-    theta []: (float) 1D array containing the model parameters.
 
-    Outputs
+def sigmoidal_model(x: np.ndarray, theta: np.ndarray) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x: np.ndarray 
+        features.
+    theta: np.ndarray
+        Model Parameters.
+
+    Returns
     -------
-    h []: (float) 1D array containing the regression.
+    h: np.ndarray 
+        regression.
     '''
     n = len(x)
 
-    z = PolynomialModel(x,theta)
+    z = polynomial_model(x, theta)
 
     h = np.zeros(n)
-    for i in range(n) :
+    for i in range(n):
         h[i] = sigmoid(z[i])
 
     return h
 
-def CostGradient(x,y,h,theta) :
-    '''
-    Inputs
-    ------
-    x []: (float) 1D array containing the feature.
-    y []: (float) 1D array containing the data. 
-    h []: (float) 1D array containing the regression.
-    theta []: (float) 1D array containing the model parameters.
 
-    Outputs
+def cost_function_gradient(x: np.ndarray, y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda: float, i_r: int) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x: np.ndarray 
+        features.
+    y: np.ndarray
+        data.  
+    h: np.ndarray 
+        regression.
+    theta: np.ndarray
+        Model Parameters.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
+
+    Returns
     -------
-    gradJ []: (float) Cost Function Gradient.
+    gradJ: np.ndarray 
+        Cost Function Gradient.
     '''
 
-    n = verifyLen(y,h)
+    n = verify_length(y, h)
     m = len(theta)
 
     gradJ = np.zeros(m)
-    for j in range(m) :
-        for i in range(n) :
-            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * pow(x[i],j)
+    for j in range(m):
+        for i in range(n):
+            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * pow(x[i], j)
+
+    gradJ = regularized_cost_function_gradient(gradJ, theta, Lambda, i_r)
 
     return gradJ
 
-def runGradientDescent(x,y,theta,n_it,alpha,model) :
-    '''
-    Inputs
-    ------
-    x []: (float) 1D array containing the feature.
-    y []: (float) 1D array containing the data. 
-    theta []: (float) 1D array containing the model parameters.
-    n_it []: (int) number of iterations.
-    alpha []: (float) learning rate.
-    model []: (string) string containing the model.
 
-    Outputs
+def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: int, alpha: float, model: str, Lambda: float = 0.0, i_r: str = 3) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x: np.ndarray 
+        features.
+    y: np.ndarray
+        data. 
+    theta: np.ndarray
+        Model Parameters.
+    n_it: int 
+        number of iterations.
+    alpha: float 
+        learning rate.
+    model: str 
+        string containing the model.
+    Lambda: float
+        Regularization term.
+    i_r: int
+        Regularization index.
+
+    Returns
     -------
-    h []: (float) 1D array containing the regression.
+    h: np.ndarray 
+        regression.
     '''
 
-    n = verifyLen(y,x)
+    n = verify_length(y, x)
     m = len(theta)
+    if i_r >= m:
+        warnings.warn(
+            "Regularization index bigger than the number of parameter. No regularization performed")
+    else:
+        print(f"Regularization parameter = {Lambda}")
 
     alpha = abs(alpha)
 
@@ -186,38 +306,38 @@ def runGradientDescent(x,y,theta,n_it,alpha,model) :
     # Normalize the feature
     Dx = max(x) - min(x)
     x = x / Dx
-    h, J = RegressionModel(model,x,y,theta)
+    h, J = regression_model(model, x, y, theta, Lambda, i_r)
     J_old = J
     theta_old = theta
-    for k in range(n_it) :
-        
-        h, J = RegressionModel(model,x,y,theta)
+    for k in range(n_it):
 
-        gradJ = CostGradient(x,y,h,theta)
-        for j in range(m) :
+        h, J = regression_model(model, x, y, theta, Lambda, i_r)
+
+        gradJ = cost_function_gradient(x, y, h, theta, Lambda, i_r)
+        for j in range(m):
             theta[j] = theta[j] - alpha * gradJ[j]
         Jv.append(J)
         it.append(k)
         #print("iteration = "+str(k)+"; Cost function = "+str(J))
         incr = 1.5
-        if J < J_old :
-            alpha = incr* alpha
-        elif J > J_old :
+        if J < J_old:
+            alpha = incr * alpha
+        elif J > J_old:
             theta = theta_old
             alpha = alpha / incr
-        else :
-            alpha = alpha 
+        else:
+            alpha = alpha
         #print("alpha = "+str(alpha)+"; J = "+str(J))
         J_old = J
         theta_old = theta
     # Un-normalize the feature
     x = x * Dx
-    for j in range(m) :
-        theta[j] = theta[j] / pow(Dx,j)
-    
-    h, J = RegressionModel(model,x,y,theta)
+    for j in range(m):
+        theta[j] = theta[j] / pow(Dx, j)
 
-    GenFigures(it,Jv,x,y,h)
+    h, J = regression_model(model, x, y, theta, Lambda)
+
+    generate_figures(it, Jv, x, y, h)
 
     print("Final Parameters:")
     print(theta)
@@ -227,143 +347,189 @@ def runGradientDescent(x,y,theta,n_it,alpha,model) :
 
     return h
 
-def GenFigures(it,Jv,x,y,h) :
-    '''
-    Inputs
-    ------
-    it []: (int) 1D array containing the iterations.
-    Jv []: (float) 1D array containing the cost function per iteration.
-    x []: (float) 1D array containing the feature.
-    y []: (float) 1D array containing the data.
-    h []: (float) 1D array containing the regression.
 
-    Outputs
+def generate_figures(it: np.ndarray, Jv: np.ndarray, x: np.ndarray, y: np.ndarray, h: np.ndarray):
+    '''
+    Parameters
+    ----------
+    it: np.ndarray
+        iterations.
+    Jv: np.ndarray 
+        cost function per iteration.
+    x: np.ndarray 
+        features.
+    y: np.ndarray
+        data. 
+    h: np.ndarray 
+        regression.
+
+    Returns
     -------
     '''
 
     plt.figure(1)
-    plt.semilogy(it,Jv/Jv[0],'r')
+    plt.semilogy(it, Jv/Jv[0], 'r')
     plt.xlabel("Number of Iterations")
     plt.ylabel("Normalized Cost Function")
     plt.figure(2)
-    plt.plot(x,y,'o', label='data')
-    plt.plot(x,h,'r', label='regression')
+    plt.plot(x, y, 'o', label='data')
+    plt.plot(x, h, 'r', label='regression')
     plt.xlabel("Feature")
     plt.ylabel("y")
     plt.legend(loc='lower left')
 
     return
 
-def ArtificialFeature(x_max,x_min,n) :
-    '''
-    Inputs
-    ------
-    x_min []: (float) minimum value of the feature.
-    x_max []: (float) maximum value of the feature.
-    n []: (int)
 
-    Outputs
+def artificial_feature(x_max: float, x_min: float, n: int) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x_min: float 
+        minimum value of the feature.
+    x_max: float 
+        maximum value of the feature.
+    n: int
+        feature array length
+
+    Returns
     -------
-    x []: (float) 1D array containing the feature. 
+    x: np.ndarray 
+        features.
     '''
     dx = (x_max-x_min)/(n-1)
     x = np.zeros(n)
-    for i in range(n) :
+    for i in range(n):
         x[i] = x_min + dx * i
 
     return x
 
-def PolynomialDataGenerator(theta,x_min,x_max,sigma,n) :
-    '''
-    Inputs
-    ------
-    theta []: (float) 1D array containing the model parameters.
-    x_min []: (float) minimum value of the feature.
-    x_max []: (float) maximum value of the feature.
-    sigma []: (float) noise amplitude.
-    n []: (int)
 
-    Outputs
+def polynomial_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma: float, n: int) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    theta: np.ndarray
+        Model Parameters.
+    x_min: float 
+        minimum value of the feature.
+    x_max: float 
+        maximum value of the feature.
+    sigma: float
+        noise amplitude.
+    n: int
+        feature array length
+
+    Returns
     -------
-    x []: (float) 1D array containing the feature. 
-    y []: (float) 1D array containing the data.
+    x: np.ndarray 
+        features.    
+    y: np.ndarray
+        data. 
     '''
 
-    x = ArtificialFeature(x_max,x_min,n)
+    x = artificial_feature(x_max, x_min, n)
 
-    y = PolynomialModel(x,theta)
+    y = polynomial_model(x, theta)
 
-    for i in range(n) :
-        y[i] = y[i] + sigma * rm.uniform(-1,1) / 2.0
+    for i in range(n):
+        y[i] = y[i] + sigma * rm.uniform(-1, 1) / 2.0
 
     return x, y
 
-def LogisticDataGenerator(theta,x_min,x_max,sigma,n) :
-    '''
-    Inputs
-    ------
-    theta []: (float) 1D array containing the model parameters.
-    x_min []: (float) minimum value of the feature.
-    x_max []: (float) maximum value of the feature.
-    sigma []: (float) noise amplitude.
-    n []: (int)
 
-    Outputs
+def logistic_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma: float, n: int) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    theta: np.ndarray
+        Model Parameters.
+    x_min: float 
+        minimum value of the feature.
+    x_max: float 
+        maximum value of the feature.
+    sigma: float
+        noise amplitude.
+    n: int
+        feature array length
+
+    Returns
     -------
-    x []: (float) 1D array containing the feature. 
-    y []: (float) 1D array containing the data.
+    x: np.ndarray 
+        features.    
+    y: np.ndarray
+        data. 
     '''
 
-    x = ArtificialFeature(x_max,x_min,n)
+    x = artificial_feature(x_max, x_min, n)
 
-    z = PolynomialModel(x,theta)
+    z = polynomial_model(x, theta)
 
     y = np.zeros(n)
-    for i in range(n) :
+    for i in range(n):
         y[i] = sigmoid(z[i])
 
-    if sigma > 1.0 :
+    if sigma > 1.0:
         sigma = 1.0
-    elif sigma < 0.0 :
+    elif sigma < 0.0:
         sigma = 0.0
 
-    for i in range(n) :
-        y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0,1)
-        y[i] = boundZeroOne(y[i])
+    for i in range(n):
+        y[i] = (1 - sigma) * y[i] + sigma * rm.uniform(0, 1)
+        y[i] = rebound_between_zero_and_one(y[i])
 
     return x, y
 
-def RegressionModel(model,x,y,theta) :
+
+def regression_model(model: str, x: np.ndarray, y: np.ndarray, theta: np.ndarray, Lambda: float = 0.0, i_r: int = 3) -> Union[np.ndarray, float]:
     '''
-    Inputs
-    ------
-    model []: (string) string containing the model.
-    x []: (float) 1D array containing the feature.
-    y []: (float) 1D array containing the data. 
-    theta []: (float) 1D array containing the model parameters.
-    
-    Outputs
+    Parameters
+    ----------
+    model: str 
+        string containing the model.
+    x: np.ndarray 
+        features.
+    y: np.ndarray
+        data.  
+    theta: np.ndarray
+        Model Parameters.
+
+    Returns
     -------
-    h []: (float) 1D array containing the regression.
-    J []: (float) Cost Function.
+    h: np.ndarray 
+        regression.
+    J: float
+        Cost Function.
     '''
 
-    if model == 'linear' :
-        h = PolynomialModel(x,theta)
-        J = LinearCostFunction(y,h)
-    elif model == 'logistic' :
-        h = SigmoidalModel(x,theta)
-        J = LogisticCostFunction(y,h)
-    else :
+    if model == 'linear':
+        h = polynomial_model(x, theta)
+        J = linear_cost_function(y, h, theta, Lambda, i_r)
+    elif model == 'logistic':
+        h = sigmoidal_model(x, theta)
+        J = logistic_cost_function(y, h, theta, Lambda, i_r)
+    else:
         raise ValueError('Unknown Regression Model')
 
     return h, J
 
-def boundZeroOne(y) :
 
-    if y <= 0.5 :
+def rebound_between_zero_and_one(y: float) -> float:
+    '''
+    Parameters
+    ----------
+    y: float 
+        value to rebound.
+
+    Returns
+    -------
+    y: float 
+        bounded value.
+    '''
+
+    if y <= 0.5:
         y = 0.0
-    else :
+    else:
         y = 1.0
 
     return y
