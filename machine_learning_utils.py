@@ -81,7 +81,7 @@ def regularized_cost_function(J: float, theta: np.ndarray, Lambda: float, i_r: i
     m = len(theta)
     if i_r < m:
         for j in range(i_r, m):
-            J = J + Lambda * pow(theta[j], 2.0) / (2.0 * m)
+            J += Lambda * pow(theta[j], 2.0) / (2.0 * m)
 
     return J
 
@@ -138,7 +138,7 @@ def linear_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lambda
 
     J = 0.0
     for i in range(n):
-        J = J + pow(h[i]-y[i], 2.0)/(2.0*n)
+        J += pow(h[i]-y[i], 2.0)/(2.0*n)
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
@@ -168,7 +168,7 @@ def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lamb
 
     J = 0.0
     for i in range(n):
-        J = J - (y[i] * np.log(h[i]) +
+        J -= (y[i] * np.log(h[i]) +
                  (1.0 - y[i]) * np.log(1.0 - h[i]))/n
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
@@ -176,11 +176,11 @@ def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lamb
     return J
 
 
-def polynomial_terms(x: np.ndarray, j: int) -> float:
+def polynomial_terms(x: Union[np.ndarray, float], j: int) -> float:
     '''
     Parameters
     ----------
-    x: np.ndarray 
+    x: Union[np.ndarray, float] 
         features.
     j: int
         index of the parameter theta.
@@ -190,10 +190,16 @@ def polynomial_terms(x: np.ndarray, j: int) -> float:
     term: float 
         polynomial term.
     '''
-
-    m = len(x)
-    if m == 1:
+    if isinstance(x, float):
         term = pow(x, j)
+    else:
+        m = len(x)
+        nu = np.zeros(m)
+        for i in range(m):
+            nu[i] = j
+        term = 1
+        for i in range(m):
+            term *= pow(x[i],nu[i])
 
     return term
 
@@ -278,7 +284,7 @@ def cost_function_gradient(x: np.ndarray, y: np.ndarray, h: np.ndarray, theta: n
     gradJ = np.zeros(m)
     for j in range(m):
         for i in range(n):
-            gradJ[j] = gradJ[j] + ((h[i]-y[i])/n) * \
+            gradJ[j] += ((h[i]-y[i])/n) * \
                 polynomial_terms(x[:, i], j)
 
     gradJ = regularized_cost_function_gradient(gradJ, theta, Lambda, i_r)
@@ -330,7 +336,9 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     Jv = []
     it = []
     # Normalize the feature
-    Dx = np.amax(x) - np.amin(x)
+    Dx = np.zeros(x_raws)
+    for i in range(x_raws):
+        Dx[i] = np.amax(x[i,:]) - np.amin(x[i,:])
     x = x / Dx
     h, J = regression_model(model, x, y, theta, Lambda, i_r)
     J_old = J
@@ -359,7 +367,7 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     # Un-normalize the feature
     x = x * Dx
     for j in range(m):
-        theta[j] = theta[j] / pow(Dx, j)
+        theta[j] = theta[j] / polynomial_terms(Dx, j)
 
     h, J = regression_model(model, x, y, theta, Lambda)
 
