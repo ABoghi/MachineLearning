@@ -615,19 +615,19 @@ def polynomial_expansion_exponents(order: int, n_variables: int):
 
     """
 
-    pattern = [0] * n_variables
-    for current_sum in range(1, order+1):
-        pattern[0] = current_sum
-        yield tuple(pattern)
-        while pattern[-1] < current_sum:
+    exponents = [0] * n_variables
+    for index in range(1, order+1):
+        exponents[0] = index
+        yield tuple(exponents)
+        while exponents[-1] < index:
             for i in range(2, n_variables + 1):
-                if 0 < pattern[n_variables - i]:
-                    pattern[n_variables - i] -= 1
+                if 0 < exponents[n_variables - i]:
+                    exponents[n_variables - i] -= 1
                     if 2 < i:
-                        pattern[n_variables - i + 1] = 1 + pattern[-1]
-                        pattern[-1] = 0
+                        exponents[n_variables - i + 1] = 1 + exponents[-1]
+                        exponents[-1] = 0
                     else:
-                        pattern[-1] += 1
+                        exponents[-1] += 1
                     break
-            yield tuple(pattern)
-        pattern[-1] = 0
+            yield tuple(exponents)
+        exponents[-1] = 0
