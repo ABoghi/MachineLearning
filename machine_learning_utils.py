@@ -288,8 +288,7 @@ def cost_function_gradient(x: np.ndarray, y: np.ndarray, h: np.ndarray, theta: n
     gradJ = np.zeros(m)
     for j in range(m):
         for i in range(n):
-            gradJ[j] += ((h[i]-y[i])/n) * \
-                polynomial_terms(x[:, i], j)
+            gradJ[j] += ((h[i]-y[i])/n) * polynomial_terms(x[:, i], j)
 
     gradJ = regularized_cost_function_gradient(gradJ, theta, Lambda, i_r)
 
@@ -344,7 +343,11 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     Dx = np.zeros(x_raws)
     for i in range(x_raws):
         Dx[i] = np.amax(x[i, :]) - np.amin(x[i, :])
-    x = x / Dx
+    #x = x / Dx
+    for j in range(x_raws):
+        for i in range(x_cols):
+            x[j][i] = x[j][i] / Dx[j]
+
     h, J = regression_model(model, x, y, theta, Lambda, i_r)
     J_old = J
     theta_old = theta
@@ -370,7 +373,11 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
         J_old = J
         theta_old = theta
     # Un-normalize the feature
-    x = x * Dx
+    #x = x * Dx
+    for j in range(x_raws):
+        for i in range(x_cols):
+            x[j][i] = x[j][i] * Dx[j]
+
     for j in range(m):
         theta[j] = theta[j] / polynomial_terms(Dx, j)
 
