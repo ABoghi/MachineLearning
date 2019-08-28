@@ -422,7 +422,7 @@ def generate_figures(it: np.ndarray, Jv: np.ndarray, x: np.ndarray, y: np.ndarra
     return
 
 
-def artificial_feature(x_max: float, x_min: float, n: int) -> np.ndarray:
+def artificial_feature(x_max: Union[float, np.ndarray], x_min: Union[float, np.ndarray], n: int) -> np.ndarray:
     '''
     Parameters
     ----------
@@ -432,21 +432,34 @@ def artificial_feature(x_max: float, x_min: float, n: int) -> np.ndarray:
         maximum value of the feature.
     n: int
         feature array length
+    m: int
+        number of variables
 
     Returns
     -------
     x: np.ndarray 
         features.
     '''
-    dx = (x_max-x_min)/(n-1)
-    x = np.zeros((1, n))
-    for i in range(n):
-        x[0][i] = x_min + dx * i
+    if isinstance(x_max, float):
+        m = 1
+        dx = np.array([(x_max-x_min)/(n-1)])
+        x_min = np.array([x_min])
+        x_max = np.array([x_max])
+    else:
+        m = x_max.shape[0]
+        dx = np.zeros(m)
+        for i in range(m):
+            dx[i] = (x_max[i]-x_min[i])/(n-1)
+
+    x = np.zeros((m, n))
+    for j in range(m):
+        for i in range(n):
+            x[j][i] = x_min[j] + dx[j] * i
 
     return x
 
 
-def polynomial_data_generator(theta: np.ndarray, x_min: float, x_max: float, sigma: float, n: int) -> np.ndarray:
+def polynomial_data_generator(theta: np.ndarray, x_min: Union[float, np.ndarray], x_max: Union[float, np.ndarray], sigma: float, n: int) -> np.ndarray:
     '''
     Parameters
     ----------
@@ -474,7 +487,7 @@ def polynomial_data_generator(theta: np.ndarray, x_min: float, x_max: float, sig
     y = polynomial_model(x, theta)
 
     for i in range(n):
-        y[i] = y[i] + sigma * rm.uniform(-1, 1) / 2.0
+        y[i] += sigma * rm.uniform(-1, 1) / 2.0
 
     return x, y
 
@@ -598,7 +611,7 @@ def find_polynomial_expansion_exponents(j: int, m: int) -> Union[float, np.ndarr
         nu = np.insert(nu, 0, [0] * nu.shape[1], axis=0)
         out = nu[j]
     else:
-        out = np.array([0])
+        out = np.zeros(m)
 
     return out
 # NOTE: this function has been adapted from Stack-Overflow. It would need further editing in the future.
