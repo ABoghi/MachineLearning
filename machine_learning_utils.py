@@ -4,6 +4,8 @@ import matplotlib
 from matplotlib import pyplot as plt
 import warnings
 from typing import Union
+from scipy.special import binom
+import time
 
 
 def sigmoid(z: float) -> float:
@@ -108,7 +110,7 @@ def regularized_cost_function_gradient(gradJ: np.ndarray, theta: np.ndarray, Lam
 
     if i_r < m:
         for j in range(i_r, m):
-            gradJ[j] = gradJ[j] + Lambda * theta[j] / m
+            gradJ[j] += Lambda * theta[j] / m
 
     return gradJ
 
@@ -169,7 +171,7 @@ def logistic_cost_function(y: np.ndarray, h: np.ndarray, theta: np.ndarray, Lamb
     J = 0.0
     for i in range(n):
         J -= (y[i] * np.log(h[i]) +
-                 (1.0 - y[i]) * np.log(1.0 - h[i]))/n
+              (1.0 - y[i]) * np.log(1.0 - h[i]))/n
 
     J = regularized_cost_function(J, theta, Lambda, i_r)
 
@@ -193,13 +195,15 @@ def polynomial_terms(x: Union[np.ndarray, float], j: int) -> float:
     if isinstance(x, float):
         term = pow(x, j)
     else:
+        order = j
         m = len(x)
         nu = np.zeros(m)
-        for i in range(m):
-            nu[i] = j
+        '''for i in range(m):
+            nu[i] = order - i # binom(order-i, m)'''
+        nu = find_polynomial_expansion_exponents(j, m)
         term = 1
         for i in range(m):
-            term *= pow(x[i],nu[i])
+            term *= pow(x[i], nu[i])
 
     return term
 
@@ -318,6 +322,7 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     h: np.ndarray 
         regression.
     '''
+    t_start = time.time()
     x_raws = x.shape[0]
     x_cols = x.shape[1]
 
@@ -338,7 +343,7 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
     # Normalize the feature
     Dx = np.zeros(x_raws)
     for i in range(x_raws):
-        Dx[i] = np.amax(x[i,:]) - np.amin(x[i,:])
+        Dx[i] = np.amax(x[i, :]) - np.amin(x[i, :])
     x = x / Dx
     h, J = regression_model(model, x, y, theta, Lambda, i_r)
     J_old = J
@@ -378,6 +383,8 @@ def run_gradient_descent(x: np.ndarray, y: np.ndarray, theta: np.ndarray, n_it: 
 
     print("Final Learning Rate:")
     print(alpha)
+
+    print(f"Execution time: {time.time() - t_start}[s]")
 
     return h
 
@@ -567,3 +574,60 @@ def rebound_between_zero_and_one(y: float) -> float:
         y = 1.0
 
     return y
+
+
+def find_polynomial_expansion_exponents(j: int, m: int) -> Union[float, np.ndarray]:
+    """
+    Parameters
+    ----------
+    j: int 
+        position in the array indexing >= polynomial order
+    m: int 
+        number of variables
+
+    Returns
+    -------
+    out: Union[float, np.ndarray] 
+        polynomial exponents.
+    """
+    if j != 0:
+        nu = np.array([])
+        for i in polynomial_expansion_exponents(j, m):
+            nu = np.append(nu, i)
+        nu = np.reshape(nu, (-1, m))
+        nu = np.insert(nu, 0, [0] * nu.shape[1], axis=0)
+        out = nu[j]
+    else:
+        out = np.array([0])
+
+    return out
+# NOTE: this function has been adapted from Stack-Overflow. It would need further editing in the future.
+
+
+def polynomial_expansion_exponents(order: int, n_variables: int):
+    """
+    Parameters
+    ----------
+    order: int 
+        polynomial order
+    n_variables: int 
+        number of variables
+
+    """
+
+    pattern = [0] * n_variables
+    for current_sum in range(1, order+1):
+        pattern[0] = current_sum
+        yield tuple(pattern)
+        while pattern[-1] < current_sum:
+            for i in range(2, n_variables + 1):
+                if 0 < pattern[n_variables - i]:
+                    pattern[n_variables - i] -= 1
+                    if 2 < i:
+                        pattern[n_variables - i + 1] = 1 + pattern[-1]
+                        pattern[-1] = 0
+                    else:
+                        pattern[-1] += 1
+                    break
+            yield tuple(pattern)
+        pattern[-1] = 0
